@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>You Don't Have to Teach the King Diplomacy — The Ambassador Pattern</title>
+<meta name="description" content="A story-first guide to the Ambassador Pattern. Learn how this cloud design pattern works through an easy-to-follow story about a King, a Castle, and a diplomatic helper."/>
+<meta property="og:title" content="You Don't Have to Teach the King Diplomacy"/>
+<meta property="og:description" content="The Ambassador Pattern explained through storytelling, with diagrams."/>
+<meta property="og:type" content="article"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --serif: 'Lora', Georgia, serif;
+    --sans: 'Inter', system-ui, sans-serif;
+    --bg: #f9f7f4;
+    --surface: #ffffff;
+    --surface2: #f1ede8;
+    --text: #1a1816;
+    --text2: #4a4540;
+    --muted: #8a8078;
+    --border: #e0d9d0;
+    --accent: #2563eb;
+    --accent-bg: #eff6ff;
+    --accent-text: #1d4ed8;
+    --success: #15803d;
+    --success-bg: #f0fdf4;
+    --danger: #b91c1c;
+    --danger-bg: #fef2f2;
+    --amber: #92400e;
+    --amber-bg: #fffbeb;
+    --radius: 10px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141210;
+      --surface: #1e1c1a;
+      --surface2: #252320;
+      --text: #f0ece6;
+      --text2: #b0a99f;
+      --muted: #706860;
+      --border: #333028;
+      --accent: #60a5fa;
+      --accent-bg: #172038;
+      --accent-text: #93c5fd;
+      --success: #4ade80;
+      --success-bg: #052e16;
+      --danger: #f87171;
+      --danger-bg: #2d0f0f;
+      --amber: #fcd34d;
+      --amber-bg: #2d1a00;
+      --shadow: 0 1px 4px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.25);
+    }
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Layout ── */
+  .container { max-width: 720px; margin: 0 auto; padding: 0 1.25rem; }
+
+  /* ── Hero ── */
+  .hero {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 3.5rem 1.25rem 3rem;
+    text-align: center;
+  }
+  .hero-tag {
+    display: inline-block;
+    background: var(--accent-bg);
+    color: var(--accent-text);
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 1.4rem;
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(28px, 5vw, 46px);
+    font-weight: 700;
+    line-height: 1.18;
+    color: var(--text);
+    max-width: 640px;
+    margin: 0 auto .9rem;
+  }
+  .hero .subtitle {
+    font-family: var(--serif);
+    font-size: clamp(15px, 2.5vw, 19px);
+    font-style: italic;
+    color: var(--text2);
+    max-width: 580px;
+    margin: 0 auto 1.6rem;
+    line-height: 1.55;
+  }
+  .byline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+  }
+  .byline-dot { color: var(--border); }
+
+  /* ── Article Body ── */
+  .article { padding: 2.8rem 0 5rem; }
+
+  /* ── Typography ── */
+  h2 {
+    font-family: var(--serif);
+    font-size: clamp(20px, 3vw, 26px);
+    font-weight: 700;
+    color: var(--text);
+    margin: 3rem 0 .9rem;
+    line-height: 1.3;
+  }
+  h3 {
+    font-family: var(--sans);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 1.8rem 0 .5rem;
+  }
+  p { margin-bottom: 1.3rem; color: var(--text2); font-size: 16.5px; line-height: 1.8; }
+  p strong { color: var(--text); font-weight: 600; }
+  code {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    background: var(--surface2);
+    color: var(--accent-text);
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  /* ── Callout ── */
+  .callout {
+    background: var(--accent-bg);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 1rem 1.25rem;
+    margin: 1.8rem 0;
+    font-size: 15.5px;
+    color: var(--text2);
+    line-height: 1.65;
+  }
+
+  /* ── Pull Quote ── */
+  .pullquote {
+    font-family: var(--serif);
+    font-size: clamp(19px, 3vw, 24px);
+    font-style: italic;
+    color: var(--text);
+    border-top: 2px solid var(--border);
+    border-bottom: 2px solid var(--border);
+    padding: 1.4rem 0;
+    margin: 2.4rem 0;
+    line-height: 1.45;
+    text-align: center;
+  }
+
+  /* ── Diagram ── */
+  .diagram-wrap {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 1.25rem;
+    margin: 2rem 0;
+    box-shadow: var(--shadow);
+    overflow-x: auto;
+  }
+  .diagram-wrap svg { display: block; width: 100%; }
+  .diagram-caption {
+    font-size: 12.5px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: .75rem;
+    font-style: italic;
+  }
+
+  /* SVG text helpers */
+  .svg-label { font-family: var(--sans); font-size: 13px; fill: var(--text2); }
+  .svg-label-bold { font-family: var(--sans); font-size: 13px; font-weight: 600; fill: var(--text); }
+  .svg-small { font-family: var(--sans); font-size: 11.5px; fill: var(--muted); }
+
+  /* ── Steps ── */
+  .steps { display: grid; gap: 10px; margin: 1.4rem 0; }
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    box-shadow: var(--shadow);
+  }
+  .step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--accent-bg);
+    color: var(--accent-text);
+    font-size: 12px;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+    font-family: var(--sans);
+  }
+  .step-body { font-size: 14.5px; color: var(--text2); line-height: 1.65; }
+  .step-body strong { color: var(--text); font-weight: 600; }
+
+  /* ── When grid ── */
+  .when-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 1.2rem 0 1.8rem; }
+  @media (max-width: 520px) { .when-grid { grid-template-columns: 1fr; } }
+  .when-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 1rem 1.1rem;
+    box-shadow: var(--shadow);
+  }
+  .when-card.yes { border-top: 3px solid var(--success); }
+  .when-card.no  { border-top: 3px solid var(--danger); }
+  .when-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; font-family: var(--sans); }
+  .when-label.yes { color: var(--success); }
+  .when-label.no  { color: var(--danger); }
+  .when-item { font-size: 13.5px; color: var(--text2); line-height: 1.5; margin-bottom: 6px; display: flex; gap: 6px; }
+
+  /* ── Real World ── */
+  .real-world {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 1.2rem 1.4rem;
+    margin: 1.4rem 0;
+    box-shadow: var(--shadow);
+  }
+  .rw-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 12px; font-family: var(--sans); }
+  .rw-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; font-size: 14.5px; color: var(--text2); line-height: 1.55; }
+  .rw-row:last-child { margin-bottom: 0; }
+  .rw-icon { font-size: 18px; flex-shrink: 0; line-height: 1; margin-top: 1px; }
+  .rw-row strong { color: var(--text); font-weight: 600; }
+
+  /* ── Footer ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem 1.25rem;
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-tag">System Design · Cloud Patterns</div>
+  <h1>You Don't Have to Teach the King Diplomacy</h1>
+  <p class="subtitle">A story-first guide to the Ambassador Pattern — the quiet helper that handles the messy stuff so your app never has to.</p>
+  <div class="byline">
+    <span>8 min read</span>
+    <span class="byline-dot">·</span>
+    <span>Azure Architecture Patterns</span>
+    <span class="byline-dot">·</span>
+    <span>Cloud Design</span>
+  </div>
+</header>
+
+<!-- ARTICLE -->
+<main class="article">
+<div class="container">
+
+  <!-- DIAGRAM 1 -->
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 680 230" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Your app trying to talk to external services while handling retries, auth, and TLS on its own">
+      <defs>
+        <marker id="arr1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#b91c1c" stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+        <marker id="arr1b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+      </defs>
+      <!-- Castle outline -->
+      <rect x="30" y="68" width="145" height="128" rx="10" fill="none" stroke="#9ca3af" stroke-width="1"/>
+      <rect x="30" y="52" width="22" height="22" rx="3" fill="none" stroke="#9ca3af" stroke-width="1"/>
+      <rect x="63" y="52" width="22" height="22" rx="3" fill="none" stroke="#9ca3af" stroke-width="1"/>
+      <rect x="96" y="52" width="22" height="22" rx="3" fill="none" stroke="#9ca3af" stroke-width="1"/>
+      <rect x="129" y="52" width="22" height="22" rx="3" fill="none" stroke="#9ca3af" stroke-width="1"/>
+      <!-- Crown emoji -->
+      <text x="103" y="122" text-anchor="middle" font-size="30">👑</text>
+      <text class="svg-label-bold" x="103" y="150" text-anchor="middle">Your App</text>
+      <text class="svg-small" x="103" y="167" text-anchor="middle">(legacy / hard to change)</text>
+
+      <!-- Squiggly arrows of doom -->
+      <path d="M177 100 Q230 75 268 100" stroke="#b91c1c" stroke-width="1.5" stroke-dasharray="4 3" fill="none" marker-end="url(#arr1)" opacity=".8"/>
+      <path d="M177 132 Q230 140 268 132" stroke="#b91c1c" stroke-width="1.5" stroke-dasharray="4 3" fill="none" marker-end="url(#arr1)" opacity=".6"/>
+      <path d="M177 164 Q230 185 268 168" stroke="#b91c1c" stroke-width="1.5" stroke-dasharray="4 3" fill="none" marker-end="url(#arr1)" opacity=".45"/>
+
+      <!-- Pain labels -->
+      <text class="svg-small" x="222" y="67" text-anchor="middle" fill="#b91c1c">retries?</text>
+      <text class="svg-small" x="226" y="125" text-anchor="middle" fill="#b91c1c">TLS auth?</text>
+      <text class="svg-small" x="224" y="182" text-anchor="middle" fill="#b91c1c">circuit break?</text>
+
+      <!-- External Services -->
+      <rect x="270" y="66" width="130" height="42" rx="8" fill="none" stroke="#9ca3af" stroke-width="1"/>
+      <text class="svg-label" x="335" y="91" text-anchor="middle">🗄️  Database</text>
+
+      <rect x="270" y="122" width="130" height="42" rx="8" fill="none" stroke="#9ca3af" stroke-width="1"/>
+      <text class="svg-label" x="335" y="147" text-anchor="middle">🌐  Remote API</text>
+
+      <rect x="270" y="178" width="130" height="40" rx="8" fill="none" stroke="#9ca3af" stroke-width="1"/>
+      <text class="svg-label" x="335" y="202" text-anchor="middle">☁️  Cloud Service</text>
+
+      <!-- Problem card -->
+      <rect x="425" y="48" width="228" height="168" rx="10" fill="#fef2f2" stroke="#fca5a5" stroke-width="1"/>
+      <text class="svg-label-bold" x="539" y="74" text-anchor="middle" fill="#991b1b">The Problem</text>
+      <text class="svg-small" x="539" y="95" text-anchor="middle" fill="#7f1d1d">Your app must handle everything:</text>
+      <text class="svg-small" x="445" y="116" fill="#b91c1c">→  Retries on failure</text>
+      <text class="svg-small" x="445" y="136" fill="#b91c1c">→  Circuit breaking</text>
+      <text class="svg-small" x="445" y="156" fill="#b91c1c">→  TLS / mTLS encryption</text>
+      <text class="svg-small" x="445" y="176" fill="#b91c1c">→  Logging &amp; tracing</text>
+      <text class="svg-small" x="445" y="196" fill="#b91c1c">→  Routing intelligence</text>
+    </svg>
+    <p class="diagram-caption">Before the Ambassador: your app carries every network burden itself — impossible for legacy code.</p>
+  </div>
+
+  <p>Imagine you're a <strong>King</strong> inside a grand castle. Your castle is ancient — built centuries ago, with walls thick enough to stop any arrow. But those same walls make it nearly impossible to renovate.</p>
+
+  <p>Every day you need to send messages to distant kingdoms — databases, APIs, cloud services. But each kingdom has its own language, its own etiquette, its own security protocol. And your scribes, bless them, only know ancient Latin.</p>
+
+  <div class="callout">
+    The real problem isn't that your scribes are bad. It's that <strong>teaching every scribe every protocol is impossible</strong> — especially when the castle is so old, renovating the walls risks bringing the whole structure down.
+  </div>
+
+  <p>This is exactly the problem the <strong>Ambassador Pattern</strong> solves. Instead of forcing your app to handle every network concern — retries, security, routing, monitoring — you hire a specialist and post them right outside the door.</p>
+
+  <h2>Enter the Ambassador</h2>
+
+  <!-- DIAGRAM 2 -->
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 680 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="App talks to Ambassador sidecar, Ambassador handles security and routing to external services">
+      <defs>
+        <marker id="arr2a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+        <marker id="arr2b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#15803d" stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+        <marker id="arr2c" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#6b7280" stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+      </defs>
+
+      <!-- Dashed "same host" boundary -->
+      <rect x="14" y="38" width="366" height="186" rx="12" fill="none" stroke="#9ca3af" stroke-width="1" stroke-dasharray="6 4"/>
+      <text class="svg-small" x="196" y="30" text-anchor="middle" fill="#9ca3af">← same host / sidecar container →</text>
+
+      <!-- Castle -->
+      <rect x="28" y="70" width="118" height="116" rx="8" fill="none" stroke="#9ca3af" stroke-width="1"/>
+      <rect x="28" y="55" width="18" height="18" rx="2" fill="none" stroke="#9ca3af" stroke-width="0.8"/>
+      <rect x="56" y="55" width="18" height="18" rx="2" fill="none" stroke="#9ca3af" stroke-width="0.8"/>
+      <rect x="84" y="55" width="18" height="18" rx="2" fill="none" stroke="#9ca3af" stroke-width="0.8"/>
+      <rect x="112" y="55" width="18" height="18" rx="2" fill="none" stroke="#9ca3af" stroke-width="0.8"/>
+      <text x="87" y="118" text-anchor="middle" font-size="26">👑</text>
+      <text class="svg-label-bold" x="87" y="145" text-anchor="middle">Your App</text>
+      <text class="svg-small" x="87" y="162" text-anchor="middle" fill="#6b7280">(unchanged)</text>
+
+      <!-- Arrow: App → Ambassador -->
+      <line x1="148" y1="128" x2="192" y2="128" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arr2a)"/>
+      <text class="svg-small" x="170" y="120" text-anchor="middle" fill="#2563eb">plain</text>
+      <text class="svg-small" x="170" y="143" text-anchor="middle" fill="#2563eb">request</text>
+
+      <!-- Ambassador box -->
+      <rect x="195" y="50" width="166" height="160" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.2"/>
+      <text x="278" y="82" text-anchor="middle" font-size="20">🧳</text>
+      <text class="svg-label-bold" x="278" y="104" text-anchor="middle" fill="#1d4ed8">Ambassador</text>
+      <text class="svg-small" x="278" y="121" text-anchor="middle" fill="#3b82f6">Handles silently:</text>
+      <text class="svg-small" x="210" y="140" fill="#1d4ed8">✓  Retries &amp; timeouts</text>
+      <text class="svg-small" x="210" y="157" fill="#1d4ed8">✓  TLS / mTLS</text>
+      <text class="svg-small" x="210" y="174" fill="#1d4ed8">✓  Circuit breaking</text>
+      <text class="svg-small" x="210" y="191" fill="#1d4ed8">✓  Logging &amp; routing</text>
+
+      <!-- Arrows: Ambassador → Services -->
+      <line x1="363" y1="95" x2="408" y2="82" stroke="#15803d" stroke-width="1.2" marker-end="url(#arr2b)"/>
+      <line x1="363" y1="128" x2="408" y2="128" stroke="#15803d" stroke-width="1.2" marker-end="url(#arr2b)"/>
+      <line x1="363" y1="162" x2="408" y2="178" stroke="#15803d" stroke-width="1.2" marker-end="url(#arr2b)"/>
+
+      <!-- Services -->
+      <rect x="410" y="58" width="132" height="40" rx="7" fill="none" stroke="#9ca3af" stroke-width="1"/>
+      <text class="svg-label" x="476" y="82" text-anchor="middle">🗄️  Database</text>
+
+      <rect x="410" y="108" width="132" height="40" rx="7" fill="none" stroke="#9ca3af" stroke-width="1"/>
+      <text class="svg-label" x="476" y="132" text-anchor="middle">🌐  Remote API</text>
+
+      <rect x="410" y="158" width="132" height="40" rx="7" fill="none" stroke="#9ca3af" stroke-width="1"/>
+      <text class="svg-label" x="476" y="182" text-anchor="middle">☁️  Cloud Service</text>
+    </svg>
+    <p class="diagram-caption">The Ambassador sits next to your app on the same host, acting as the middleman to the outside world.</p>
+  </div>
+
+  <p>The Ambassador is a <strong>helper process</strong> — a sidecar — running right next to your application on the same machine or container. Your app sends simple requests to <code>localhost</code>. The Ambassador intercepts them and does all the hard work before they reach the outside world.</p>
+
+  <div class="pullquote">"Your app is the King. Stop making the King do diplomat work."</div>
+
+  <h2>How it unfolds, step by step</h2>
+  <p>Here's the exact journey a single request takes once you have an Ambassador in place:</p>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><strong>The app sends a plain request.</strong> It calls <code>localhost:8080/data</code> — no auth, no retry logic, no TLS. Just the raw intent.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><strong>The Ambassador intercepts it.</strong> Running as a sidecar on the same host, it picks up the call before it ever touches the network.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><strong>It wraps the request in security.</strong> Adds TLS, mutual certificate auth, the right headers. The app never needed to know any of this.</div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-body"><strong>It checks the circuit breaker.</strong> If the remote service is down, the Ambassador fails fast — no waiting 30 seconds for a timeout.</div></div>
+    <div class="step"><div class="step-num">5</div><div class="step-body"><strong>It routes intelligently.</strong> Picks the right endpoint, the right version of the service, the right region.</div></div>
+    <div class="step"><div class="step-num">6</div><div class="step-body"><strong>It logs everything.</strong> Latency, status codes, request IDs — all captured without a single line of logging code in your app.</div></div>
+    <div class="step"><div class="step-num">7</div><div class="step-body"><strong>The response travels back.</strong> The Ambassador strips the TLS layer, hands back a plain response to your app. The King gets his answer — spotless.</div></div>
+  </div>
+
+  <!-- DIAGRAM 3: Request Flow -->
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 680 172" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Request flows from your app to ambassador to remote service and back">
+      <defs>
+        <marker id="arr3a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+        <marker id="arr3b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#15803d" stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+        <marker id="arr3c" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+      </defs>
+      <!-- App -->
+      <rect x="20" y="54" width="128" height="52" rx="8" fill="none" stroke="#9ca3af" stroke-width="1"/>
+      <text class="svg-label-bold" x="84" y="82" text-anchor="middle">Your App</text>
+      <text class="svg-small" x="84" y="98" text-anchor="middle">talks to localhost</text>
+      <!-- Arrow 1 -->
+      <line x1="150" y1="80" x2="196" y2="80" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arr3a)"/>
+      <text class="svg-small" x="173" y="70" text-anchor="middle" fill="#2563eb">1. plain</text>
+      <!-- Ambassador -->
+      <rect x="198" y="36" width="178" height="88" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.2"/>
+      <text class="svg-label-bold" x="287" y="62" text-anchor="middle" fill="#1d4ed8">🧳  Ambassador</text>
+      <text class="svg-small" x="287" y="82" text-anchor="middle" fill="#2563eb">retry · auth · tls · log</text>
+      <text class="svg-small" x="287" y="98" text-anchor="middle" fill="#2563eb">circuit breaker · routing</text>
+      <!-- Arrow 2 -->
+      <line x1="378" y1="80" x2="424" y2="80" stroke="#15803d" stroke-width="1.5" marker-end="url(#arr3b)"/>
+      <text class="svg-small" x="401" y="70" text-anchor="middle" fill="#15803d">2. secure</text>
+      <!-- Remote -->
+      <rect x="426" y="54" width="136" height="52" rx="8" fill="none" stroke="#9ca3af" stroke-width="1"/>
+      <text class="svg-label-bold" x="494" y="82" text-anchor="middle">Remote Service</text>
+      <!-- Return arrow -->
+      <path d="M426 98 Q400 140 376 128 Q290 150 200 128 Q166 120 152 102" stroke="#9ca3af" stroke-width="1" fill="none" stroke-dasharray="4 3" marker-end="url(#arr3c)"/>
+      <text class="svg-small" x="296" y="156" text-anchor="middle" fill="#9ca3af">response travels back the same way</text>
+    </svg>
+    <p class="diagram-caption">Your app talks to localhost. The Ambassador handles everything beyond that door.</p>
+  </div>
+
+  <h2>When should you use it?</h2>
+
+  <div class="when-grid">
+    <div class="when-card yes">
+      <div class="when-label yes">✓ Good fit</div>
+      <div class="when-item">🏛️ You have a legacy app that's hard to change</div>
+      <div class="when-item">🌐 Multiple services in different languages need the same network behaviour</div>
+      <div class="when-item">👥 A specialist team owns networking, separate from the app team</div>
+      <div class="when-item">🔒 You need retries, circuit breaking, or TLS without touching app code</div>
+    </div>
+    <div class="when-card no">
+      <div class="when-label no">✗ Not ideal</div>
+      <div class="when-item">⚡ Latency is ultra-critical (proxy adds a small hop)</div>
+      <div class="when-item">📦 Only one language needs this — a shared client library is simpler</div>
+      <div class="when-item">🕸️ You already have a service mesh (Istio, Linkerd) — use that</div>
+      <div class="when-item">🔧 Connectivity features need deep app integration</div>
+    </div>
+  </div>
+
+  <h2>The real-world cast of Ambassadors</h2>
+  <p>You've almost certainly already met one of these:</p>
+
+  <div class="real-world">
+    <div class="rw-title">In the wild today</div>
+    <div class="rw-row"><span class="rw-icon">⚡</span><div><strong>Envoy Proxy</strong> — the Ambassador inside Istio and most service meshes. Handles mTLS, retries, load balancing, and observability — transparently, next to your pod.</div></div>
+    <div class="rw-row"><span class="rw-icon">🔗</span><div><strong>NGINX sidecar</strong> — classic reverse proxy running alongside a legacy app. Routes, terminates TLS, and logs without the app knowing a thing.</div></div>
+    <div class="rw-row"><span class="rw-icon">☁️</span><div><strong>Dapr sidecar</strong> — Microsoft's distributed application runtime. The ultimate Ambassador — handles pub/sub, state, secrets, and service invocation next to any app in any language.</div></div>
+    <div class="rw-row"><span class="rw-icon">🛡️</span><div><strong>Linkerd proxy</strong> — ultra-lightweight Rust sidecar that adds zero-trust mTLS and golden metrics to any container automatically.</div></div>
+  </div>
+
+  <h2>Keeping it in your head</h2>
+
+  <p>Here's the mental model that never fails: <strong>your app is royalty, and royalty doesn't handle logistics.</strong></p>
+
+  <p>The Ambassador is the trusted diplomat posted just outside the throne room. Same building. Always available. Fluent in every protocol. And the King never needs to learn a new language.</p>
+
+  <p>That's the pattern. That's all of it.</p>
+
+  <hr/>
+
+  <p style="font-size:14px; color: var(--muted); text-align:center; font-style:italic;">
+    Further reading:
+    <a href="https://learn.microsoft.com/en-us/azure/architecture/patterns/ambassador" target="_blank" rel="noopener">Official Azure Docs</a> ·
+    <a href="https://learn.microsoft.com/en-us/azure/architecture/patterns/sidecar" target="_blank" rel="noopener">Sidecar Pattern</a> ·
+    <a href="https://learn.microsoft.com/en-us/azure/architecture/patterns/circuit-breaker" target="_blank" rel="noopener">Circuit Breaker Pattern</a>
+  </p>
+
+</div>
+</main>
+
+<footer>
+  <p>Built with ♥ · <a href="https://learn.microsoft.com/en-us/azure/architecture/patterns/ambassador" target="_blank" rel="noopener">Source: Azure Architecture Center</a></p>
+</footer>
+
+</body>
+</html>
