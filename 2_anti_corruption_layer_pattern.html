@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Don't Let the Old World Corrupt the New — The Anti-Corruption Layer Pattern</title>
+<meta name="description" content="A story-first guide to the Anti-Corruption Layer pattern. Learn how to protect your modern system from the chaos of legacy code — through a story about a kingdom, a translator, and a very messy old empire."/>
+<meta property="og:title" content="Don't Let the Old World Corrupt the New"/>
+<meta property="og:description" content="The Anti-Corruption Layer pattern explained through storytelling, with diagrams. Zero jargon, all story."/>
+<meta property="og:type" content="article"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --serif: 'Lora', Georgia, serif;
+    --sans: 'Inter', system-ui, sans-serif;
+    --bg: #f9f7f4;
+    --surface: #ffffff;
+    --surface2: #f1ede8;
+    --text: #1a1816;
+    --text2: #4a4540;
+    --muted: #8a8078;
+    --border: #e0d9d0;
+    --accent: #7c3aed;
+    --accent-bg: #f5f3ff;
+    --accent-text: #6d28d9;
+    --success: #15803d;
+    --success-bg: #f0fdf4;
+    --danger: #b91c1c;
+    --danger-bg: #fef2f2;
+    --amber: #92400e;
+    --amber-bg: #fffbeb;
+    --teal: #0f766e;
+    --teal-bg: #f0fdfa;
+    --radius: 10px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.05);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141210;
+      --surface: #1e1c1a;
+      --surface2: #252320;
+      --text: #f0ece6;
+      --text2: #b0a99f;
+      --muted: #706860;
+      --border: #333028;
+      --accent: #a78bfa;
+      --accent-bg: #1e1538;
+      --accent-text: #c4b5fd;
+      --success: #4ade80;
+      --success-bg: #052e16;
+      --danger: #f87171;
+      --danger-bg: #2d0f0f;
+      --amber: #fcd34d;
+      --amber-bg: #2d1a00;
+      --teal: #2dd4bf;
+      --teal-bg: #042f2e;
+      --shadow: 0 1px 4px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.25);
+    }
+  }
+
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container { max-width: 720px; margin: 0 auto; padding: 0 1.25rem; }
+
+  /* ── Hero ── */
+  .hero {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 3.5rem 1.25rem 3rem;
+    text-align: center;
+  }
+  .hero-tag {
+    display: inline-block;
+    background: var(--accent-bg);
+    color: var(--accent-text);
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 1.4rem;
+  }
+  .hero h1 {
+    font-family: var(--serif);
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 700;
+    line-height: 1.18;
+    color: var(--text);
+    max-width: 640px;
+    margin: 0 auto .9rem;
+  }
+  .hero .subtitle {
+    font-family: var(--serif);
+    font-size: clamp(15px, 2.5vw, 19px);
+    font-style: italic;
+    color: var(--text2);
+    max-width: 580px;
+    margin: 0 auto 1.6rem;
+    line-height: 1.55;
+  }
+  .byline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+    flex-wrap: wrap;
+  }
+  .byline-dot { color: var(--border); }
+
+  /* ── Article ── */
+  .article { padding: 2.8rem 0 5rem; }
+
+  h2 {
+    font-family: var(--serif);
+    font-size: clamp(20px, 3vw, 26px);
+    font-weight: 700;
+    color: var(--text);
+    margin: 3rem 0 .9rem;
+    line-height: 1.3;
+  }
+  h3 {
+    font-family: var(--sans);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 1.8rem 0 .5rem;
+  }
+  p { margin-bottom: 1.3rem; color: var(--text2); font-size: 16.5px; line-height: 1.8; }
+  p strong { color: var(--text); font-weight: 600; }
+  code {
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    background: var(--surface2);
+    color: var(--accent-text);
+    padding: 1px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  /* ── Callout ── */
+  .callout {
+    background: var(--accent-bg);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 1rem 1.25rem;
+    margin: 1.8rem 0;
+    font-size: 15.5px;
+    color: var(--text2);
+    line-height: 1.65;
+  }
+  .callout.warning {
+    background: var(--amber-bg);
+    border-left-color: var(--amber);
+  }
+  .callout.success {
+    background: var(--teal-bg);
+    border-left-color: var(--teal);
+  }
+
+  /* ── Pull Quote ── */
+  .pullquote {
+    font-family: var(--serif);
+    font-size: clamp(19px, 3vw, 24px);
+    font-style: italic;
+    color: var(--text);
+    border-top: 2px solid var(--border);
+    border-bottom: 2px solid var(--border);
+    padding: 1.4rem 0;
+    margin: 2.4rem 0;
+    line-height: 1.45;
+    text-align: center;
+  }
+
+  /* ── Diagram ── */
+  .diagram-wrap {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 1.25rem;
+    margin: 2rem 0;
+    box-shadow: var(--shadow);
+    overflow-x: auto;
+  }
+  .diagram-wrap svg { display: block; width: 100%; }
+  .diagram-caption {
+    font-size: 12.5px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: .75rem;
+    font-style: italic;
+  }
+
+  /* ── Steps ── */
+  .steps { display: grid; gap: 10px; margin: 1.4rem 0; }
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    box-shadow: var(--shadow);
+  }
+  .step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--accent-bg);
+    color: var(--accent-text);
+    font-size: 12px;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+    font-family: var(--sans);
+  }
+  .step-body { font-size: 14.5px; color: var(--text2); line-height: 1.65; }
+  .step-body strong { color: var(--text); font-weight: 600; }
+
+  /* ── When grid ── */
+  .when-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 1.2rem 0 1.8rem; }
+  @media (max-width: 520px) { .when-grid { grid-template-columns: 1fr; } }
+  .when-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 1rem 1.1rem;
+    box-shadow: var(--shadow);
+  }
+  .when-card.yes { border-top: 3px solid var(--success); }
+  .when-card.no  { border-top: 3px solid var(--danger); }
+  .when-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; font-family: var(--sans); }
+  .when-label.yes { color: var(--success); }
+  .when-label.no  { color: var(--danger); }
+  .when-item { font-size: 13.5px; color: var(--text2); line-height: 1.5; margin-bottom: 6px; display: flex; gap: 6px; }
+
+  /* ── Comparison table ── */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin: 1.4rem 0 1.8rem;
+    background: var(--surface);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+  .compare-table th {
+    background: var(--surface2);
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--muted);
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .compare-table td {
+    padding: 10px 14px;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.55;
+  }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table .old { color: var(--danger); }
+  .compare-table .new { color: var(--success); }
+
+  /* ── Real World ── */
+  .real-world {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 1.2rem 1.4rem;
+    margin: 1.4rem 0;
+    box-shadow: var(--shadow);
+  }
+  .rw-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 12px; font-family: var(--sans); }
+  .rw-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; font-size: 14.5px; color: var(--text2); line-height: 1.55; }
+  .rw-row:last-child { margin-bottom: 0; }
+  .rw-icon { font-size: 18px; flex-shrink: 0; line-height: 1; margin-top: 2px; }
+  .rw-row strong { color: var(--text); font-weight: 600; }
+
+  /* ── Consideration cards ── */
+  .considerations { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 1.2rem 0 1.8rem; }
+  @media (max-width: 520px) { .considerations { grid-template-columns: 1fr; } }
+  .cons-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.1rem;
+    box-shadow: var(--shadow);
+  }
+  .cons-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+  .cons-body { font-size: 13px; color: var(--text2); line-height: 1.55; }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem 1.25rem;
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-tag">System Design · Cloud Patterns</div>
+  <h1>Don't Let the Old World Corrupt the New</h1>
+  <p class="subtitle">A story-first guide to the Anti-Corruption Layer — the translator that keeps your shiny modern system from absorbing the chaos of legacy code.</p>
+  <div class="byline">
+    <span>9 min read</span>
+    <span class="byline-dot">·</span>
+    <span>Azure Architecture Patterns</span>
+    <span class="byline-dot">·</span>
+    <span>Domain-Driven Design</span>
+    <span class="byline-dot">·</span>
+    <span>Migration Strategy</span>
+  </div>
+</header>
+
+<main class="article">
+<div class="container">
+
+  <p>Picture this: a brand new, beautifully planned city is built right next to a crumbling old empire. The new city has wide roads, clean water, and a logical street grid. The old empire has winding alleys, a chaotic postal system, and ancient bureaucracy that nobody fully understands.</p>
+
+  <p>Now the new city needs to trade with the old empire. Merchants need to cross the border daily. But here's the danger: the longer they spend in the old empire, the more they start <em>speaking like it, thinking like it, operating like it</em>. The chaos starts leaking back across the border. The new city slowly begins to look just as messy as the old one.</p>
+
+  <p>This is exactly what happens when you build a modern system that talks directly to a legacy one. The new system starts absorbing the old system's bad habits — convoluted data models, obsolete APIs, bizarre naming conventions — until your clean new code is just as tangled as the thing it was supposed to replace.</p>
+
+  <!-- DIAGRAM 1: The Problem -->
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 680 230" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Modern system directly calling legacy system, absorbing its bad data models and chaos">
+      <defs>
+        <marker id="d1arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#b91c1c" stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+        <marker id="d1arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#9ca3af" stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+      </defs>
+
+      <!-- New System box -->
+      <rect x="24" y="60" width="200" height="120" rx="10" fill="#f5f3ff" stroke="#a78bfa" stroke-width="1.2"/>
+      <text font-family="'Inter', sans-serif" font-size="13" font-weight="600" fill="#6d28d9" x="124" y="84" text-anchor="middle">✨ Modern System</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#7c3aed" x="124" y="103" text-anchor="middle">Clean domain model</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#7c3aed" x="124" y="119" text-anchor="middle">Modern APIs</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#7c3aed" x="124" y="135" text-anchor="middle">Logical data schema</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#7c3aed" x="124" y="151" text-anchor="middle">TypeScript / Python / Go</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#b91c1c" x="124" y="171" text-anchor="middle">⚠️ Being corrupted...</text>
+
+      <!-- Infection arrow -->
+      <path d="M400 128 Q340 95 226 118" stroke="#b91c1c" stroke-width="2" stroke-dasharray="5 3" fill="none" marker-end="url(#d1arr)"/>
+      <text font-family="'Inter', sans-serif" font-size="11" fill="#b91c1c" x="316" y="90" text-anchor="middle">legacy semantics</text>
+      <text font-family="'Inter', sans-serif" font-size="11" fill="#b91c1c" x="316" y="104" text-anchor="middle">leaking across</text>
+
+      <!-- Legacy System box -->
+      <rect x="402" y="48" width="252" height="152" rx="10" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.2"/>
+      <text font-family="'Inter', sans-serif" font-size="13" font-weight="600" fill="#991b1b" x="528" y="72" text-anchor="middle">🏚️ Legacy System</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#b91c1c" x="528" y="93" text-anchor="middle">CUST_REC_NO instead of customerId</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#b91c1c" x="528" y="112" text-anchor="middle">SOAP XML APIs from 2003</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#b91c1c" x="528" y="131" text-anchor="middle">Dates as YYYYMMDD strings</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#b91c1c" x="528" y="150" text-anchor="middle">Undocumented status codes</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#b91c1c" x="528" y="169" text-anchor="middle">Interleaved business logic</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#b91c1c" x="528" y="188" text-anchor="middle">God tables with 200 columns</text>
+    </svg>
+    <p class="diagram-caption">Without protection, legacy semantics bleed directly into your modern codebase — corrupting the clean design you worked so hard to build.</p>
+  </div>
+
+  <div class="callout warning">
+    <strong>The core danger:</strong> When your new code starts calling <code>CUST_REC_NO</code> instead of <code>customerId</code>, and handling <code>YYYYMMDD</code> strings instead of proper dates, it hasn't just integrated with the legacy system — it has <em>become</em> part of it.
+  </div>
+
+  <h2>The Anti-Corruption Layer</h2>
+
+  <p>The Anti-Corruption Layer (ACL) is a facade or adapter layer placed between two subsystems that don't share the same semantics. It translates requests that one subsystem makes to the other, ensuring that dependencies on outside subsystems don't limit an application's design.</p>
+
+  <p>Back to our city analogy: instead of letting merchants freely wander the old empire and come back speaking its language, you station a <strong>dedicated translator at the border gate</strong>. Every message going in gets translated into the old empire's terms. Every message coming back gets cleaned up, mapped, and handed over in the new city's language.</p>
+
+  <p>The merchants stay clean. The city stays modern. The chaos stays on the other side of the wall.</p>
+
+  <!-- DIAGRAM 2: The Solution -->
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 680 250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Anti-Corruption Layer sits between modern system and legacy system, translating all communication">
+      <defs>
+        <marker id="d2a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#7c3aed" stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+        <marker id="d2b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#b91c1c" stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+        <marker id="d2c" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#0f766e" stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+      </defs>
+
+      <!-- Modern System -->
+      <rect x="18" y="70" width="168" height="122" rx="10" fill="#f5f3ff" stroke="#a78bfa" stroke-width="1.2"/>
+      <text font-family="'Inter', sans-serif" font-size="13" font-weight="600" fill="#6d28d9" x="102" y="94" text-anchor="middle">✨ Modern System</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#7c3aed" x="102" y="115" text-anchor="middle">Speaks its own</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#7c3aed" x="102" y="131" text-anchor="middle">clean language</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#7c3aed" x="102" y="152" text-anchor="middle">customerId</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#7c3aed" x="102" y="168" text-anchor="middle">ISO-8601 dates</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#15803d" x="102" y="184" text-anchor="middle">✓ Never corrupted</text>
+
+      <!-- Arrow: Modern → ACL -->
+      <line x1="188" y1="131" x2="224" y2="131" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#d2a)"/>
+      <text font-family="'Inter', sans-serif" font-size="10.5" fill="#7c3aed" x="206" y="122" text-anchor="middle">clean</text>
+      <text font-family="'Inter', sans-serif" font-size="10.5" fill="#7c3aed" x="206" y="146" text-anchor="middle">request</text>
+
+      <!-- ACL box -->
+      <rect x="226" y="40" width="178" height="180" rx="10" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.5"/>
+      <text font-family="'Inter', sans-serif" font-size="13" font-weight="600" fill="#0f766e" x="315" y="68" text-anchor="middle">🔄 Anti-Corruption</text>
+      <text font-family="'Inter', sans-serif" font-size="13" font-weight="600" fill="#0f766e" x="315" y="85" text-anchor="middle">Layer</text>
+      <text font-family="'Inter', sans-serif" font-size="11" fill="#0f766e" x="315" y="108" text-anchor="middle">Maps customerId → CUST_REC_NO</text>
+      <text font-family="'Inter', sans-serif" font-size="11" fill="#0f766e" x="315" y="125" text-anchor="middle">Converts date formats</text>
+      <text font-family="'Inter', sans-serif" font-size="11" fill="#0f766e" x="315" y="142" text-anchor="middle">Translates status codes</text>
+      <text font-family="'Inter', sans-serif" font-size="11" fill="#0f766e" x="315" y="159" text-anchor="middle">Flattens XML → JSON</text>
+      <text font-family="'Inter', sans-serif" font-size="11" fill="#0f766e" x="315" y="176" text-anchor="middle">Validates input/output</text>
+      <text font-family="'Inter', sans-serif" font-size="11" fill="#0f766e" x="315" y="196" text-anchor="middle">Logs &amp; traces all calls</text>
+
+      <!-- Arrow: ACL → Legacy -->
+      <line x1="406" y1="131" x2="442" y2="131" stroke="#b91c1c" stroke-width="1.5" marker-end="url(#d2b)"/>
+      <text font-family="'Inter', sans-serif" font-size="10.5" fill="#b91c1c" x="424" y="122" text-anchor="middle">legacy</text>
+      <text font-family="'Inter', sans-serif" font-size="10.5" fill="#b91c1c" x="424" y="146" text-anchor="middle">dialect</text>
+
+      <!-- Legacy System -->
+      <rect x="444" y="70" width="216" height="122" rx="10" fill="#fef2f2" stroke="#fca5a5" stroke-width="1"/>
+      <text font-family="'Inter', sans-serif" font-size="13" font-weight="600" fill="#991b1b" x="552" y="94" text-anchor="middle">🏚️ Legacy System</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#b91c1c" x="552" y="115" text-anchor="middle">Speaks its old language</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#b91c1c" x="552" y="131" text-anchor="middle">CUST_REC_NO</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#b91c1c" x="552" y="147" text-anchor="middle">YYYYMMDD strings</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#b91c1c" x="552" y="163" text-anchor="middle">SOAP XML, status "00"/"01"</text>
+      <text font-family="'Inter', sans-serif" font-size="11.5" fill="#b91c1c" x="552" y="179" text-anchor="middle">(unchanged — that's fine)</text>
+    </svg>
+    <p class="diagram-caption">The ACL is the border translator. Modern system talks clean. Legacy system talks old. The ACL handles every conversion in between.</p>
+  </div>
+
+  <div class="pullquote">"The new city doesn't learn the old empire's language. It hires a translator and stations them at the gate."</div>
+
+  <h2>What the translator actually does</h2>
+
+  <p>Here's a concrete example. Say your legacy system stores orders with a field called <code>ORD_STAT_CD</code> where <code>"00"</code> means pending, <code>"01"</code> means shipped, and <code>"02"</code> means cancelled — but only on weekdays. Your modern system has an enum: <code>OrderStatus.PENDING</code>, <code>OrderStatus.SHIPPED</code>, <code>OrderStatus.CANCELLED</code>.</p>
+
+  <p>Without an ACL, your new code is littered with <code>if (legacyCode === "00") { ... }</code> checks everywhere. With an ACL, that mapping lives in exactly one place, and your new code never sees it.</p>
+
+  <!-- DIAGRAM 3: The Translation in action -->
+  <div class="diagram-wrap">
+    <svg viewBox="0 0 680 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Showing how a concrete order object gets translated between modern and legacy formats">
+      <defs>
+        <marker id="d3a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M2 1L8 5L2 9" fill="none" stroke="#0f766e" stroke-width="1.5" stroke-linecap="round"/>
+        </marker>
+      </defs>
+
+      <!-- Modern object -->
+      <rect x="18" y="26" width="206" height="162" rx="10" fill="#f5f3ff" stroke="#a78bfa" stroke-width="1"/>
+      <text font-family="'Inter', sans-serif" font-size="12" font-weight="600" fill="#6d28d9" x="121" y="48" text-anchor="middle">Modern Order Object</text>
+      <rect x="30" y="56" width="182" height="120" rx="6" fill="#ede9fe" stroke="#c4b5fd" stroke-width="0.8"/>
+      <text font-family="'Courier New', monospace" font-size="11" fill="#4c1d95" x="42" y="76">{</text>
+      <text font-family="'Courier New', monospace" font-size="11" fill="#4c1d95" x="52" y="93">orderId: "ord-7823",</text>
+      <text font-family="'Courier New', monospace" font-size="11" fill="#4c1d95" x="52" y="110">customerId: "c-991",</text>
+      <text font-family="'Courier New', monospace" font-size="11" fill="#4c1d95" x="52" y="127">status: "SHIPPED",</text>
+      <text font-family="'Courier New', monospace" font-size="11" fill="#4c1d95" x="52" y="144">orderDate: "2024-03-15"</text>
+      <text font-family="'Courier New', monospace" font-size="11" fill="#4c1d95" x="42" y="161">}</text>
+
+      <!-- ACL middle arrow area -->
+      <rect x="238" y="60" width="156" height="92" rx="8" fill="#f0fdfa" stroke="#0d9488" stroke-width="1"/>
+      <text font-family="'Inter', sans-serif" font-size="11" font-weight="600" fill="#0f766e" x="316" y="82" text-anchor="middle">🔄 ACL translates</text>
+      <text font-family="'Inter', sans-serif" font-size="10.5" fill="#0f766e" x="316" y="100" text-anchor="middle">orderId → ORD_NUM</text>
+      <text font-family="'Inter', sans-serif" font-size="10.5" fill="#0f766e" x="316" y="116" text-anchor="middle">customerId → CUST_REC_NO</text>
+      <text font-family="'Inter', sans-serif" font-size="10.5" fill="#0f766e" x="316" y="132" text-anchor="middle">"SHIPPED" → "01"</text>
+      <text font-family="'Inter', sans-serif" font-size="10.5" fill="#0f766e" x="316" y="148" text-anchor="middle">"2024-03-15" → "20240315"</text>
+      <line x1="226" y1="107" x2="236" y2="107" stroke="#0f766e" stroke-width="1.5" marker-end="url(#d3a)"/>
+      <line x1="396" y1="107" x2="406" y2="107" stroke="#0f766e" stroke-width="1.5" marker-end="url(#d3a)"/>
+
+      <!-- Legacy object -->
+      <rect x="408" y="26" width="254" height="162" rx="10" fill="#fef2f2" stroke="#fca5a5" stroke-width="1"/>
+      <text font-family="'Inter', sans-serif" font-size="12" font-weight="600" fill="#991b1b" x="535" y="48" text-anchor="middle">Legacy Order Record</text>
+      <rect x="420" y="56" width="230" height="120" rx="6" fill="#fee2e2" stroke="#fca5a5" stroke-width="0.8"/>
+      <text font-family="'Courier New', monospace" font-size="11" fill="#7f1d1d" x="432" y="76">{</text>
+      <text font-family="'Courier New', monospace" font-size="11" fill="#7f1d1d" x="442" y="93">ORD_NUM: "7823",</text>
+      <text font-family="'Courier New', monospace" font-size="11" fill="#7f1d1d" x="442" y="110">CUST_REC_NO: "991",</text>
+      <text font-family="'Courier New', monospace" font-size="11" fill="#7f1d1d" x="442" y="127">ORD_STAT_CD: "01",</text>
+      <text font-family="'Courier New', monospace" font-size="11" fill="#7f1d1d" x="442" y="144">ORD_DT: "20240315"</text>
+      <text font-family="'Courier New', monospace" font-size="11" fill="#7f1d1d" x="432" y="161">}</text>
+    </svg>
+    <p class="diagram-caption">The ACL maps each field — in both directions — so neither system ever needs to speak the other's language.</p>
+  </div>
+
+  <h2>The step-by-step journey</h2>
+
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div><div class="step-body"><strong>Modern system makes a call in its own language.</strong> It asks for <code>getOrder(customerId: "c-991")</code> using clean, typed domain objects.</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-body"><strong>The ACL intercepts it.</strong> As a facade or adapter, it sits at the boundary and catches every outbound call before it reaches the legacy system.</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-body"><strong>It translates the request into legacy dialect.</strong> Maps field names, converts date formats, assembles the SOAP envelope, adds the auth tokens the old API expects.</div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-body"><strong>The legacy system responds in its own mess.</strong> Returns <code>CUST_REC_NO</code>, <code>ORD_STAT_CD: "01"</code>, and a date as <code>"20240315"</code>. The modern system never sees any of this.</div></div>
+    <div class="step"><div class="step-num">5</div><div class="step-body"><strong>The ACL translates the response back.</strong> Converts, cleans, validates, and maps everything into the modern domain model before handing it back.</div></div>
+    <div class="step"><div class="step-num">6</div><div class="step-body"><strong>The modern system receives clean data.</strong> Gets back a proper <code>Order</code> object with <code>status: "SHIPPED"</code> and an ISO date. It has no idea what happened on the other side.</div></div>
+    <div class="step"><div class="step-num">7</div><div class="step-body"><strong>It logs and traces the whole thing.</strong> The ACL captures latency, errors, translation failures — giving you observability into the boundary without cluttering either system.</div></div>
+  </div>
+
+  <h2>Not just a type converter</h2>
+
+  <p>The ACL does more than rename fields. It's a full <strong>semantic boundary</strong> — protecting the concepts, not just the syntax.</p>
+
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>What gets translated</th>
+        <th class="old">Legacy world</th>
+        <th class="new">Modern world</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Customer identity</td>
+        <td class="old"><code>CUST_REC_NO</code> (numeric string)</td>
+        <td class="new"><code>customerId</code> (UUID)</td>
+      </tr>
+      <tr>
+        <td>Order status</td>
+        <td class="old"><code>"00"</code> / <code>"01"</code> / <code>"02"</code></td>
+        <td class="new"><code>PENDING</code> / <code>SHIPPED</code> / <code>CANCELLED</code></td>
+      </tr>
+      <tr>
+        <td>Dates</td>
+        <td class="old"><code>YYYYMMDD</code> string</td>
+        <td class="new">ISO-8601 / timestamp</td>
+      </tr>
+      <tr>
+        <td>API protocol</td>
+        <td class="old">SOAP / XML over HTTP</td>
+        <td class="new">REST / JSON</td>
+      </tr>
+      <tr>
+        <td>Error signals</td>
+        <td class="old">Magic return codes</td>
+        <td class="new">Typed exceptions / error objects</td>
+      </tr>
+      <tr>
+        <td>Concepts</td>
+        <td class="old">"Account" (means 12 different things)</td>
+        <td class="new">Explicit <code>UserAccount</code>, <code>BillingAccount</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout success">
+    <strong>The ACL originated in Domain-Driven Design</strong> — Eric Evans described it as the mechanism for preserving the integrity of your domain model when you're forced to integrate with foreign systems. The translation layer isn't just technical convenience; it's a <em>design philosophy</em>.
+  </div>
+
+  <h2>When should you use it?</h2>
+
+  <div class="when-grid">
+    <div class="when-card yes">
+      <div class="when-label yes">✓ Use it when</div>
+      <div class="when-item">🏗️ Migrating a large app gradually — you need to keep talking to legacy while building new</div>
+      <div class="when-item">🌐 Integrating with a third-party system your team doesn't control</div>
+      <div class="when-item">📐 The two systems have fundamentally different data models or business concepts</div>
+      <div class="when-item">🚧 Legacy system has quality problems: convoluted schemas, obscure APIs, undocumented behaviour</div>
+    </div>
+    <div class="when-card no">
+      <div class="when-label no">✗ Skip it when</div>
+      <div class="when-item">🤝 Both systems share the same semantics — the ACL would be empty boilerplate</div>
+      <div class="when-item">⚡ You're retiring the legacy system very soon and the migration is trivial</div>
+      <div class="when-item">📦 A simple client library solves the integration without a dedicated service</div>
+      <div class="when-item">🔁 Business logic is creeping in — the ACL should only translate, not orchestrate</div>
+    </div>
+  </div>
+
+  <h2>Things to watch out for</h2>
+
+  <div class="considerations">
+    <div class="cons-card">
+      <div class="cons-title">⏱️ Added latency</div>
+      <div class="cons-body">Every call passes through an extra layer. For high-throughput paths, measure the overhead and consider async / event-driven variants.</div>
+    </div>
+    <div class="cons-card">
+      <div class="cons-title">🔧 Another thing to maintain</div>
+      <div class="cons-body">The ACL is a service (or component) you own. Include it in your monitoring, release pipelines, and on-call rotation.</div>
+    </div>
+    <div class="cons-card">
+      <div class="cons-title">📏 Scope creep</div>
+      <div class="cons-body">Business logic has a habit of drifting into the ACL. Fight it. The ACL translates — it doesn't decide, orchestrate, or route business flows.</div>
+    </div>
+    <div class="cons-card">
+      <div class="cons-title">🔍 Observability is essential</div>
+      <div class="cons-body">Use correlation IDs and structured logging. When a translation fails, you need to know exactly which field mapping broke and why.</div>
+    </div>
+    <div class="cons-card">
+      <div class="cons-title">🛡️ Trust boundary</div>
+      <div class="cons-body">The ACL often bridges different trust levels. Validate and sanitise inputs coming from the legacy side before passing them into your clean domain.</div>
+    </div>
+    <div class="cons-card">
+      <div class="cons-title">🚪 Retirement plan</div>
+      <div class="cons-body">If the ACL is part of a migration, plan its end of life. Once the legacy system is retired, the ACL should go with it — not calcify into permanent infrastructure.</div>
+    </div>
+  </div>
+
+  <h2>In the real world</h2>
+
+  <div class="real-world">
+    <div class="rw-title">Where you'll encounter this pattern</div>
+    <div class="rw-row"><span class="rw-icon">☁️</span><div><strong>Azure API Management + Azure Functions</strong> — API Management handles the external facade and auth. Azure Functions implements the domain mapping. Azure Monitor traces everything. The recommended Azure reference implementation of the ACL pattern.</div></div>
+    <div class="rw-row"><span class="rw-icon">🔄</span><div><strong>Strangler Fig migrations</strong> — The ACL is the essential companion to the Strangler Fig pattern. As you incrementally replace legacy functionality, the ACL keeps old and new talking until the old is gone.</div></div>
+    <div class="rw-row"><span class="rw-icon">📨</span><div><strong>Event-driven ACLs</strong> — Using Azure Service Bus or Event Grid, the ACL becomes async. The modern system publishes clean events; the ACL subscribes, translates, and forwards to the legacy system without blocking the caller.</div></div>
+    <div class="rw-row"><span class="rw-icon">🏢</span><div><strong>ERP integrations</strong> — Every enterprise has a SAP, Oracle, or mainframe system with its own 1990s-era data model. The ACL is standard practice when building modern microservices around these beasts.</div></div>
+  </div>
+
+  <h2>Ambassador vs. Anti-Corruption Layer — what's the difference?</h2>
+
+  <p>They're related but solve different problems:</p>
+
+  <table class="compare-table">
+    <thead>
+      <tr><th></th><th>Ambassador</th><th>Anti-Corruption Layer</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Primary job</strong></td><td>Handle network concerns (retries, TLS, circuit breaking)</td><td>Translate semantic differences (data models, concepts)</td></tr>
+      <tr><td><strong>Lives</strong></td><td>Next to your app (sidecar)</td><td>Between subsystems (facade or service)</td></tr>
+      <tr><td><strong>Knows about</strong></td><td>Protocols, connections, reliability</td><td>Domain models, field mappings, business terms</td></tr>
+      <tr><td><strong>Typical use</strong></td><td>Any outbound call to a remote service</td><td>Legacy system integration / migration</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Keeping it in your head</h2>
+
+  <p>The new city and the old empire can coexist. Trade can flow. But you don't send your architects to live in the old empire and absorb its chaos. You <strong>station a translator at the border</strong>.</p>
+
+  <p>That translator speaks both languages fluently. It knows that <code>CUST_REC_NO</code> is what the old empire calls what you'd call a <code>customerId</code>. It knows the old empire writes dates backwards. It knows their status codes by heart.</p>
+
+  <p>But most importantly — <strong>it never lets those old-world conventions cross the border into the new city.</strong></p>
+
+  <p>That's the Anti-Corruption Layer. A translator with strong opinions about what belongs in your world.</p>
+
+  <hr/>
+  <p style="font-size:14px; color: var(--muted); text-align:center; font-style:italic;">
+    Further reading:&nbsp;
+    <a href="https://learn.microsoft.com/en-us/azure/architecture/patterns/anti-corruption-layer" target="_blank" rel="noopener">Official Azure Docs</a> ·
+    <a href="https://learn.microsoft.com/en-us/azure/architecture/patterns/strangler-fig" target="_blank" rel="noopener">Strangler Fig Pattern</a> ·
+    <a href="https://learn.microsoft.com/en-us/azure/architecture/patterns/ambassador" target="_blank" rel="noopener">Ambassador Pattern</a> ·
+    <a href="https://learn.microsoft.com/en-us/azure/architecture/patterns/circuit-breaker" target="_blank" rel="noopener">Circuit Breaker Pattern</a>
+  </p>
+
+</div>
+</main>
+
+<footer>
+  <p>Built with ♥ · <a href="https://learn.microsoft.com/en-us/azure/architecture/patterns/anti-corruption-layer" target="_blank" rel="noopener">Source: Azure Architecture Center</a></p>
+</footer>
+
+</body>
+</html>
